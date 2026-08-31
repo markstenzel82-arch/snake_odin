@@ -1,0 +1,14 @@
+body_h.bmp
+body_v.bmp
+head_d.bmp
+head_l.bmp
+head_r.bmp
+head_u.bmp
+tail_d.bmp
+tail_l.bmp
+tail_r.bmp
+tail_u.bmp
+turn_d_l.bmp
+turn_d_r.bmp
+turn_u_l.bmp
+turn_u_r.bmp

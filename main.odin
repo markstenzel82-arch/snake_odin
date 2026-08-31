@@ -5,9 +5,9 @@ import "vendor:sdl2";
 import "core:math/rand";
 
 // globals
-WINDOW_WIDTH :i32 = 1280
-WINDOW_HEIGHT :i32 = 720
-BLOCK_SIZE :i32 = 10
+WINDOW_WIDTH :i32 = 1920
+WINDOW_HEIGHT :i32 = 1080
+BLOCK_SIZE :i32 = 20
 
 main :: proc () {
     running := true;
