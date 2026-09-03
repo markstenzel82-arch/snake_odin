@@ -53,12 +53,12 @@ Snake :: struct {
     segments: [dynamic]Segment,
     direction: Direction,
     last_direction: Direction,
+    next_direction: Direction,
     last_move_time: u32
 }
 Segment :: struct {
     drawable: Drawable,
-    fDirection: Direction,
-    tDirection: Direction
+    direction: Direction
 }
 
 Drawable :: struct {
@@ -115,23 +115,24 @@ make_game :: proc(block_size : i32, time_btw_moves : f32, tbm_perc_decr : f32, s
     // add the head!
     head := Drawable{sdl2.Rect{center_x, center_y , block_size, block_size}, bitmaps.head_l, .SNAKE};
     game.coords_to_draw[{head.rect.x, head.rect.y}] = head;
-    head_segment := Segment{head, .RIGHT, .LEFT}
+    head_segment := Segment{head, .LEFT}
     append(&snake.segments, head_segment);
 
     for i : i32 = 1; i < snake_initial_len - 1; i += 1 {
         x := center_x + (block_size * i);
         body := Drawable{sdl2.Rect{x, center_y , block_size, block_size}, bitmaps.body_h, .SNAKE};
-        body_segment := Segment{body, .RIGHT, .LEFT};
+        body_segment := Segment{body, .LEFT};
         append(&snake.segments, body_segment);
         game.coords_to_draw[{x, center_y}] = body;
     }    
     // add the tail!
     tail := Drawable{sdl2.Rect{center_x + ((snake_initial_len - 1) * block_size), center_y , block_size, block_size}, bitmaps.tail_l, .SNAKE};
-    tail_segment := Segment{tail, .RIGHT, .LEFT};
+    tail_segment := Segment{tail, .LEFT};
     game.coords_to_draw[{tail.rect.x, tail.rect.y}] = tail;
     append(&snake.segments, tail_segment);
 
     snake.last_direction = .LEFT;
+    snake.next_direction = .LEFT;
 
     game.snake = snake;
     return game
@@ -170,22 +171,22 @@ run :: proc(window : ^sdl2.Window, game : ^Game) {
                     case .w:
                         if game.snake.direction != .DOWN {
                             game.snake.last_direction = game.snake.direction;
-                            game.snake.direction = .UP;
+                            game.snake.next_direction = .UP;
                         }
                     case .s:
                         if game.snake.direction != .UP {
                             game.snake.last_direction = game.snake.direction;       
-                            game.snake.direction = .DOWN;
+                            game.snake.next_direction = .DOWN;
                         }
                     case .a:
                         if game.snake.direction != .RIGHT {
                             game.snake.last_direction = game.snake.direction;          
-                            game.snake.direction = .LEFT;
+                            game.snake.next_direction = .LEFT;
                         }
                     case .d:
                         if game.snake.direction != .LEFT {
                             game.snake.last_direction = game.snake.direction;
-                            game.snake.direction = .RIGHT;
+                            game.snake.next_direction = .RIGHT;
                         }
                 }
             }            
@@ -214,16 +215,15 @@ draw :: proc(window : ^sdl2.Window, game : ^Game) {
  
 
 
-move_snake :: proc (game : ^Game) {
+move_snake :: proc (game : ^Game) {    
     remove_tail := true;
     snake := game.snake;
+    snake.direction = snake.next_direction;
     new_head_segment := snake.segments[0];
-    new_head_segment.fDirection = new_head_segment.tDirection;
-    new_head_segment.tDirection = snake.last_direction;
     switch snake.direction {
         case .UP: {
             new_head_segment.drawable.rect.y -= game.block_size;
-            new_head_segment.drawable.bitmap = game.bitmaps.head_u;            
+            new_head_segment.drawable.bitmap = game.bitmaps.head_u;
         }
         case .DOWN: {
             new_head_segment.drawable.rect.y += game.block_size;
@@ -263,14 +263,14 @@ move_snake :: proc (game : ^Game) {
             }
         }
     }
-    
+
+    new_head_segment.direction = snake.direction;
     inject_at(&snake.segments, 0, new_head_segment);    
     game.coords_to_draw[{rect.x, rect.y}] = new_head_segment.drawable;
 
     before_head := &snake.segments[1].drawable;
-    fDirection := &snake.segments[1].fDirection;
 
-    switch fDirection^ {
+    switch snake.last_direction {
         case .UP: {
             #partial switch snake.direction {
                 case .LEFT:
@@ -322,7 +322,9 @@ move_snake :: proc (game : ^Game) {
         delete_key(&game.coords_to_draw, [2]i32{tail.drawable.rect.x, tail.drawable.rect.y});
         new_tail := &snake.segments[len(snake.segments) - 1];
 
-        switch new_tail.fDirection {
+        direction_before_tail := snake.segments[len(snake.segments) - 2].direction;
+
+        switch direction_before_tail {
             case .LEFT:
                 new_tail.drawable.bitmap = game.bitmaps.tail_l;
             case .RIGHT: 
