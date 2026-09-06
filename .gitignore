@@ -1,0 +1,14 @@
+# build output
+build/
+*.o
+*.out
+
+# odin cache
+.odin/
+
+# editor/IDE
+.vscode/
+.ols.json
+
+# swap/temp
+*~
